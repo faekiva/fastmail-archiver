@@ -1,4 +1,5 @@
 import JamClient from "jmap-jam";
+import type { Email, Mailbox } from "jmap-jam/dist/types/jmap-mail.js";
 
 // Store email states to track moves
 const emailStates = new Map<string, string[]>();
@@ -56,7 +57,7 @@ async function initializeEmailStates(accountId: string, token: string, apiUrl: s
 		const emails = result.methodResponses[1][1].list;
 
 		// Filter emails to only include those in tracked mailboxes
-		const trackedEmails = emails.filter((email: any) => {
+		const trackedEmails = emails.filter((email: Email) => {
 			const emailMailboxIds = Object.keys(email.mailboxIds);
 
 			return emailMailboxIds.some((id) => trackedMailboxIds.includes(id));
@@ -244,9 +245,11 @@ async function main() {
 	}
 
 	// Find Inbox and its child folders
-	const inboxMailbox = mailboxes.find((m: any) => m.role === "inbox");
-	const inboxAndChildren = mailboxes.filter((m: any) => m.id === inboxMailbox?.id || m.parentId === inboxMailbox?.id);
-	const trackedMailboxIds = inboxAndChildren.map((m: any) => m.id);
+	const inboxMailbox = mailboxes.find((m: Mailbox) => m.role === "inbox");
+	const inboxAndChildren = mailboxes.filter(
+		(m: Mailbox) => m.id === inboxMailbox?.id || m.parentId === inboxMailbox?.id,
+	);
+	const trackedMailboxIds = inboxAndChildren.map((m: Mailbox) => m.id);
 
 	// Initialize email states by fetching current emails in tracked mailboxes
 	console.log("Initializing email states for Inbox and child folders...");
