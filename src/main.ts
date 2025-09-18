@@ -56,7 +56,7 @@ async function initializeEmailStates(accountId: string, token: string, apiUrl: s
 		const emails = result.methodResponses[1][1].list;
 
 		// Filter emails to only include those in tracked mailboxes
-		const trackedEmails = emails.filter((email) => {
+		const trackedEmails = emails.filter((email: any) => {
 			const emailMailboxIds = Object.keys(email.mailboxIds);
 
 			return emailMailboxIds.some((id) => trackedMailboxIds.includes(id));
@@ -149,7 +149,7 @@ async function handleEmailChanges(
 
 			for (const email of emails) {
 				const currentMailboxIds = Object.keys(email.mailboxIds);
-				const previousMailboxIds = emailStates.get(email.id) || [];
+				const previousMailboxIds = emailStates.get(email.id) ?? [];
 
 				// Only process emails that are in tracked mailboxes (current or previous)
 				const isTracked =
@@ -244,9 +244,9 @@ async function main() {
 	}
 
 	// Find Inbox and its child folders
-	const inboxMailbox = mailboxes.find((m) => m.role === "inbox");
-	const inboxAndChildren = mailboxes.filter((m) => m.id === inboxMailbox?.id || m.parentId === inboxMailbox?.id);
-	const trackedMailboxIds = inboxAndChildren.map((m) => m.id);
+	const inboxMailbox = mailboxes.find((m: any) => m.role === "inbox");
+	const inboxAndChildren = mailboxes.filter((m: any) => m.id === inboxMailbox?.id || m.parentId === inboxMailbox?.id);
+	const trackedMailboxIds = inboxAndChildren.map((m: any) => m.id);
 
 	// Initialize email states by fetching current emails in tracked mailboxes
 	console.log("Initializing email states for Inbox and child folders...");
@@ -293,17 +293,23 @@ async function main() {
 			process.on("SIGINT", () => {
 				console.log("Closing event stream connection...");
 				shouldStop = true;
-				reader.cancel();
+				void reader.cancel();
 				process.exit(0);
 			});
 
 			// Read the stream
-			while (!shouldStop) {
-				const { done, value } = await reader.read();
+			let done = false;
+			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, no-unmodified-loop-condition
+			while (!done && !shouldStop) {
+				// eslint-disable-next-line no-await-in-loop
+				const result = await reader.read();
+				done = result.done;
 
 				if (done) {
 					break;
 				}
+
+				const value = result.value;
 
 				const chunk = decoder.decode(value, { stream: true });
 				const lines = chunk.split("\n");
@@ -320,6 +326,7 @@ async function main() {
 							// Handle state change events to detect email moves
 							if (data.changed && data.changed[accountId] && data.changed[accountId].Email) {
 								console.log("Email state changed, fetching changes...");
+								// eslint-disable-next-line no-await-in-loop
 								await handleEmailChanges(
 									data.changed[accountId].Email,
 									accountId,
