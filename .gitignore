@@ -1,1 +1,6 @@
+.envrc
 node_modules/
+.claude
+.codanna
+.fastembed_cache
+dist
