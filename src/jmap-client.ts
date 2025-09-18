@@ -1,7 +1,10 @@
-import type { Email, Mailbox, EmailChanges } from "./types.js";
+import type { Email, EmailChanges, Mailbox } from "./types";
 
 export class JmapClient {
-	constructor(private token: string, private apiUrl: string) {}
+	constructor(
+		private readonly token: string,
+		private readonly apiUrl: string,
+	) {}
 
 	async getMailboxes(accountId: string): Promise<Mailbox[]> {
 		const response = await fetch(this.apiUrl, {
@@ -31,6 +34,7 @@ export class JmapClient {
 		}
 
 		const result = await response.json();
+
 		return result.methodResponses[0][1].list;
 	}
 
@@ -62,6 +66,7 @@ export class JmapClient {
 		}
 
 		const result = await response.json();
+
 		return result.methodResponses[0][1].list;
 	}
 
@@ -93,6 +98,7 @@ export class JmapClient {
 		}
 
 		const result = await response.json();
+
 		return result.methodResponses[0][1];
 	}
 
@@ -124,6 +130,7 @@ export class JmapClient {
 		}
 
 		const result = await response.json();
+
 		return result.methodResponses[0][1].ids;
 	}
 }

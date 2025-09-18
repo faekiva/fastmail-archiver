@@ -1,5 +1,5 @@
 export class EmailStateTracker {
-	private states = new Map<string, string[]>();
+	private readonly states = new Map<string, string[]>();
 
 	get(emailId: string): string[] {
 		return this.states.get(emailId) ?? [];

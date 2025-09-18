@@ -1,14 +1,14 @@
-import type { EmailChanges } from "./types.js";
-import type { JmapClient } from "./jmap-client.js";
-import type { EmailStateTracker } from "./email-state-tracker.js";
-import { shouldTrackEmail } from "./mailbox-utils.js";
-import { analyzeEmailMove, formatMoveMessage } from "./email-analysis.js";
+import { analyzeEmailMove, formatMoveMessage } from "./email-analysis";
+import type { EmailStateTracker } from "./email-state-tracker";
+import type { JmapClient } from "./jmap-client";
+import { shouldTrackEmail } from "./mailbox-utils";
+import type { EmailChanges } from "./types";
 
 export async function initializeEmailStates(
 	client: JmapClient,
 	accountId: string,
 	trackedMailboxIds: string[],
-	stateTracker: EmailStateTracker
+	stateTracker: EmailStateTracker,
 ): Promise<void> {
 	try {
 		const emailIds = await client.queryEmails(accountId, {});
@@ -17,6 +17,7 @@ export async function initializeEmailStates(
 		// Filter emails to only include those in tracked mailboxes
 		const trackedEmails = emails.filter((email) => {
 			const emailMailboxIds = Object.keys(email.mailboxIds);
+
 			return emailMailboxIds.some((id) => trackedMailboxIds.includes(id));
 		});
 
@@ -37,9 +38,9 @@ export async function processEmailChanges(
 	accountId: string,
 	stateTracker: EmailStateTracker,
 	mailboxNames: Map<string, string>,
-	trackedMailboxIds: string[]
+	trackedMailboxIds: string[],
 ): Promise<void> {
-	if (!changes.updated || changes.updated.length === 0) {
+	if (changes.updated.length === 0) {
 		return;
 	}
 
@@ -56,7 +57,7 @@ export async function processEmailChanges(
 
 			const moveDescription = analyzeEmailMove(currentMailboxIds, previousMailboxIds, mailboxNames);
 			if (moveDescription) {
-				moveDescription.subject = email.subject;
+				moveDescription.subject = email.subject ?? "(no subject)";
 				console.log(formatMoveMessage(moveDescription));
 			}
 

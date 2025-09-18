@@ -1,4 +1,4 @@
-import type { Email, Mailbox } from "jmap-jam/dist/types/jmap-mail.js";
+import type { Email, Mailbox } from "jmap-jam/dist/types/jmap-mail";
 
 export type { Email, Mailbox };
 

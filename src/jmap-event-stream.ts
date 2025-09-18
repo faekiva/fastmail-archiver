@@ -3,9 +3,9 @@ export class JmapEventStream {
 	private reader?: ReadableStreamDefaultReader<Uint8Array>;
 
 	constructor(
-		private url: string,
-		private token: string,
-		private onEvent: (data: any) => Promise<void>
+		private readonly url: string,
+		private readonly token: string,
+		private readonly onEvent: (data: any) => Promise<void>,
 	) {}
 
 	async connect(): Promise<void> {
@@ -51,7 +51,9 @@ export class JmapEventStream {
 			const result = await this.reader.read();
 			done = result.done;
 
-			if (done) break;
+			if (done) {
+				break;
+			}
 
 			const chunk = decoder.decode(result.value, { stream: true });
 			const lines = chunk.split("\n");

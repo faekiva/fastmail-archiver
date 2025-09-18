@@ -1,10 +1,11 @@
 import JamClient from "jmap-jam";
-import type { AppConfig } from "./types.js";
-import { JmapClient } from "./jmap-client.js";
-import { EmailStateTracker } from "./email-state-tracker.js";
-import { JmapEventStream } from "./jmap-event-stream.js";
-import { createMailboxNames, findInboxAndChildren } from "./mailbox-utils.js";
-import { initializeEmailStates, processEmailChanges } from "./email-processing.js";
+
+import { initializeEmailStates, processEmailChanges } from "./email-processing";
+import { EmailStateTracker } from "./email-state-tracker";
+import { JmapClient } from "./jmap-client";
+import { JmapEventStream } from "./jmap-event-stream";
+import { createMailboxNames, findInboxAndChildren } from "./mailbox-utils";
+import type { AppConfig } from "./types";
 
 async function setupApplication(): Promise<AppConfig> {
 	const token = process.env.FASTMAIL_TOKEN;
@@ -38,7 +39,7 @@ async function handlePushEvent(
 	accountId: string,
 	stateTracker: EmailStateTracker,
 	mailboxNames: Map<string, string>,
-	trackedMailboxIds: string[]
+	trackedMailboxIds: string[],
 ): Promise<void> {
 	if (!data.changed?.[accountId]?.Email) {
 		return;
@@ -63,10 +64,8 @@ async function main(): Promise<void> {
 	console.log("Initializing email states for Inbox and child folders...");
 	await initializeEmailStates(client, config.accountId, trackedMailboxIds, stateTracker);
 
-	const eventStream = new JmapEventStream(
-		config.eventSourceUrl,
-		config.token,
-		(data) => handlePushEvent(data, client, config.accountId, stateTracker, mailboxNames, trackedMailboxIds)
+	const eventStream = new JmapEventStream(config.eventSourceUrl, config.token, (data) =>
+		handlePushEvent(data, client, config.accountId, stateTracker, mailboxNames, trackedMailboxIds),
 	);
 
 	try {

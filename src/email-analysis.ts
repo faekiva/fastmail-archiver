@@ -17,10 +17,12 @@ export function compareMailboxArrays(current: string[], previous: string[]): Ema
 export function analyzeEmailMove(
 	current: string[],
 	previous: string[],
-	mailboxNames: Map<string, string>
+	mailboxNames: Map<string, string>,
 ): MoveDescription | null {
 	const result = compareMailboxArrays(current, previous);
-	if (!result.hasChanged) return null;
+	if (!result.hasChanged) {
+		return null;
+	}
 
 	const sourceMailboxes = result.removed.map((id) => mailboxNames.get(id) ?? id);
 	const destMailboxes = result.added.map((id) => mailboxNames.get(id) ?? id);
