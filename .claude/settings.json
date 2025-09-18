@@ -2,7 +2,7 @@
     "hooks": {
         "PostToolUse": [
             {
-                "matcher": "Edit|MultiEdit",
+                "matcher": "Edit|MultiEdit|Update",
                 "hooks": [
                     {
                         "command": "if [[ \"$CLAUDE_TOOL_FILE_PATH\" == *.ts ]]; then npm run lint:fix; fi",

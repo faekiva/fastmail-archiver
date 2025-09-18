@@ -48,6 +48,7 @@ async function initializeEmailStates(accountId: string, token: string, apiUrl: s
 
 		if (!response.ok) {
 			console.error("Failed to initialize email states");
+
 			return;
 		}
 
@@ -55,9 +56,10 @@ async function initializeEmailStates(accountId: string, token: string, apiUrl: s
 		const emails = result.methodResponses[1][1].list;
 
 		// Filter emails to only include those in tracked mailboxes
-		const trackedEmails = emails.filter(email => {
+		const trackedEmails = emails.filter((email) => {
 			const emailMailboxIds = Object.keys(email.mailboxIds);
-			return emailMailboxIds.some(id => trackedMailboxIds.includes(id));
+
+			return emailMailboxIds.some((id) => trackedMailboxIds.includes(id));
 		});
 
 		for (const email of trackedEmails) {
@@ -105,6 +107,7 @@ async function handleEmailChanges(
 
 		if (!changesResponse.ok) {
 			console.error("Failed to fetch email changes");
+
 			return;
 		}
 
@@ -137,6 +140,7 @@ async function handleEmailChanges(
 
 			if (!emailsResponse.ok) {
 				console.error("Failed to fetch updated emails");
+
 				return;
 			}
 
@@ -148,10 +152,13 @@ async function handleEmailChanges(
 				const previousMailboxIds = emailStates.get(email.id) || [];
 
 				// Only process emails that are in tracked mailboxes (current or previous)
-				const isTracked = currentMailboxIds.some(id => trackedMailboxIds.includes(id)) ||
-					previousMailboxIds.some(id => trackedMailboxIds.includes(id));
+				const isTracked =
+					currentMailboxIds.some((id) => trackedMailboxIds.includes(id)) ||
+					previousMailboxIds.some((id) => trackedMailboxIds.includes(id));
 
-				if (!isTracked) continue;
+				if (!isTracked) {
+					continue;
+				}
 
 				// Check if mailboxes actually changed
 				const hasChanged = !arraysEqual(currentMailboxIds.sort(), previousMailboxIds.sort());
@@ -160,15 +167,13 @@ async function handleEmailChanges(
 					const currentMailboxNames = currentMailboxIds.map((id) => mailboxMap.get(id) ?? id);
 					const previousMailboxNames = previousMailboxIds.map((id) => mailboxMap.get(id) ?? id);
 
-					const sourceMailboxes = previousMailboxNames.filter(name =>
-						!currentMailboxNames.includes(name)
-					);
-					const destMailboxes = currentMailboxNames.filter(name =>
-						!previousMailboxNames.includes(name)
-					);
+					const sourceMailboxes = previousMailboxNames.filter((name) => !currentMailboxNames.includes(name));
+					const destMailboxes = currentMailboxNames.filter((name) => !previousMailboxNames.includes(name));
 
 					if (sourceMailboxes.length > 0 && destMailboxes.length > 0) {
-						console.log(`📧 Email moved: "${email.subject}" from ${sourceMailboxes.join(", ")} → ${destMailboxes.join(", ")}`);
+						console.log(
+							`📧 Email moved: "${email.subject}" from ${sourceMailboxes.join(", ")} → ${destMailboxes.join(", ")}`,
+						);
 					} else if (destMailboxes.length > 0) {
 						console.log(`📧 Email added: "${email.subject}" → ${destMailboxes.join(", ")}`);
 					} else if (sourceMailboxes.length > 0) {
@@ -239,11 +244,9 @@ async function main() {
 	}
 
 	// Find Inbox and its child folders
-	const inboxMailbox = mailboxes.find(m => m.role === "inbox");
-	const inboxAndChildren = mailboxes.filter(m =>
-		m.id === inboxMailbox?.id || m.parentId === inboxMailbox?.id
-	);
-	const trackedMailboxIds = inboxAndChildren.map(m => m.id);
+	const inboxMailbox = mailboxes.find((m) => m.role === "inbox");
+	const inboxAndChildren = mailboxes.filter((m) => m.id === inboxMailbox?.id || m.parentId === inboxMailbox?.id);
+	const trackedMailboxIds = inboxAndChildren.map((m) => m.id);
 
 	// Initialize email states by fetching current emails in tracked mailboxes
 	console.log("Initializing email states for Inbox and child folders...");
@@ -270,6 +273,7 @@ async function main() {
 
 			if (!response.ok) {
 				console.error(`Event stream connection failed: ${response.status}`);
+
 				return;
 			}
 
@@ -280,6 +284,7 @@ async function main() {
 
 			if (!reader) {
 				console.error("No readable stream available");
+
 				return;
 			}
 
@@ -296,7 +301,9 @@ async function main() {
 			while (!shouldStop) {
 				const { done, value } = await reader.read();
 
-				if (done) break;
+				if (done) {
+					break;
+				}
 
 				const chunk = decoder.decode(value, { stream: true });
 				const lines = chunk.split("\n");
@@ -313,7 +320,14 @@ async function main() {
 							// Handle state change events to detect email moves
 							if (data.changed && data.changed[accountId] && data.changed[accountId].Email) {
 								console.log("Email state changed, fetching changes...");
-								await handleEmailChanges(data.changed[accountId].Email, accountId, token, session.apiUrl, mailboxMap, trackedMailboxIds);
+								await handleEmailChanges(
+									data.changed[accountId].Email,
+									accountId,
+									token,
+									session.apiUrl,
+									mailboxMap,
+									trackedMailboxIds,
+								);
 							}
 						} catch (_e) {
 							console.log("Raw push data:", eventData);
