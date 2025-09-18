@@ -1,7 +1,10 @@
+import { createEventSource } from "eventsource-client";
+
 import type { JmapPushEvent } from "./types";
 
 export class JmapEventStream {
 	private shouldStop = false;
+	private eventSourcePromise?: Promise<void>;
 
 	constructor(
 		private readonly url: string,
@@ -17,26 +20,14 @@ export class JmapEventStream {
 
 		console.log("Connecting to event stream:", eventSourceUrl);
 
-		const response = await fetch(eventSourceUrl, {
-			method: "GET",
+		const eventSource = createEventSource({
+			url: eventSourceUrl,
 			headers: {
-				Accept: "text/event-stream",
 				Authorization: `Bearer ${this.token}`,
-				"Cache-Control": "no-cache",
 			},
 		});
 
-		if (!response.ok) {
-			throw new Error(`Event stream connection failed: ${response.status}`);
-		}
-
 		console.log("Event stream connection opened");
-
-		if (!response.body) {
-			throw new Error("No readable stream available");
-		}
-
-		const decoder = new TextDecoder();
 
 		// Handle graceful shutdown
 		process.on("SIGINT", () => {
@@ -45,36 +36,43 @@ export class JmapEventStream {
 			process.exit(0);
 		});
 
-		// Read the stream using modern async iteration
-		for await (const chunk of response.body.values()) {
-			if (this.shouldStop) {
-				break;
-			}
-
-			const chunkText = decoder.decode(chunk, { stream: true });
-			const lines = chunkText.split("\n");
-
-			for (const line of lines) {
-				if (line.startsWith("data: ")) {
-					const eventData = line.slice(6);
-					console.log("Push event received:", eventData);
-
-					try {
-						const data = JSON.parse(eventData);
-						console.log("Parsed push data:", JSON.stringify(data, null, 2));
-						void this.onEvent(data);
-					} catch {
-						console.log("Raw push data:", eventData);
-					}
-				} else if (line.startsWith("event: ")) {
-					const eventType = line.slice(7);
-					console.log("Event type:", eventType);
-				}
-			}
-		}
+		// Store the promise so we can potentially cancel it
+		this.eventSourcePromise = this.processEventStream(eventSource);
+		await this.eventSourcePromise;
 	}
 
 	disconnect(): void {
 		this.shouldStop = true;
+	}
+
+	private async processEventStream(eventSource: AsyncIterable<{ data: string; event?: string; id?: string }>) {
+		try {
+			for await (const { data, event, id } of eventSource) {
+				if (this.shouldStop) {
+					break;
+				}
+
+				if (event) {
+					console.log("Event type:", event);
+				}
+
+				if (id) {
+					console.log("Event ID:", id);
+				}
+
+				console.log("Push event received:", data);
+
+				try {
+					const parsedData = JSON.parse(data);
+					console.log("Parsed push data:", JSON.stringify(parsedData, null, 2));
+					void this.onEvent(parsedData);
+				} catch {
+					console.log("Raw push data:", data);
+				}
+			}
+		} catch (error) {
+			console.error("Event stream error:", error);
+			throw error;
+		}
 	}
 }

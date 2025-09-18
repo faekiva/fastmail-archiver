@@ -31,6 +31,7 @@
 		"typescript": "^5.5.4"
 	},
 	"dependencies": {
+		"eventsource-client": "^1.1.4",
 		"jmap-jam": "^0.11.0"
 	}
 }

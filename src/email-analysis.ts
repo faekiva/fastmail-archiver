@@ -1,4 +1,4 @@
-import type { EmailMoveResult, MoveDescription } from "./types.js";
+import type { EmailMoveResult, MoveDescription } from "./types";
 
 export function compareMailboxArrays(current: string[], previous: string[]): EmailMoveResult {
 	const currentSorted = current.slice().sort();
@@ -18,7 +18,7 @@ export function analyzeEmailMove(
 	current: string[],
 	previous: string[],
 	mailboxNames: Map<string, string>,
-): MoveDescription | null {
+): Omit<MoveDescription, "subject"> | null {
 	const result = compareMailboxArrays(current, previous);
 	if (!result.hasChanged) {
 		return null;
@@ -38,7 +38,6 @@ export function analyzeEmailMove(
 
 	return {
 		type,
-		subject: "", // Will be filled in by caller
 		sourceMailboxes,
 		destMailboxes,
 	};

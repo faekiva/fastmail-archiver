@@ -55,9 +55,12 @@ export async function processEmailChanges(
 			const currentMailboxIds = Object.keys(email.mailboxIds);
 			const previousMailboxIds = stateTracker.get(email.id);
 
-			const moveDescription = analyzeEmailMove(currentMailboxIds, previousMailboxIds, mailboxNames);
-			if (moveDescription) {
-				moveDescription.subject = email.subject ?? "(no subject)";
+			const moveAnalysis = analyzeEmailMove(currentMailboxIds, previousMailboxIds, mailboxNames);
+			if (moveAnalysis) {
+				const moveDescription = {
+					...moveAnalysis,
+					subject: email.subject ?? "(no subject)",
+				};
 				console.log(formatMoveMessage(moveDescription));
 			}
 
