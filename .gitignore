@@ -1,6 +1,6 @@
 .envrc
 node_modules/
-.claude
+.claude/settings.local.json
 .codanna
 .fastembed_cache
 dist
