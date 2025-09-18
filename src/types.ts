@@ -27,3 +27,18 @@ export interface AppConfig {
 	apiUrl: string;
 	eventSourceUrl: string;
 }
+
+export interface JmapPushEvent {
+	type?: "connect" | "client" | string;
+	clientId?: string;
+	changed?: Record<
+		string,
+		{
+			Email?: string;
+			Mailbox?: string;
+			Thread?: string;
+			EmailDelivery?: string;
+		}
+	>;
+	servertimestamp?: number;
+}

@@ -1,11 +1,12 @@
+import type { JmapPushEvent } from "./types";
+
 export class JmapEventStream {
 	private shouldStop = false;
-	private reader?: ReadableStreamDefaultReader<Uint8Array>;
 
 	constructor(
 		private readonly url: string,
 		private readonly token: string,
-		private readonly onEvent: (data: any) => Promise<void>,
+		private readonly onEvent: (data: JmapPushEvent) => Promise<void>,
 	) {}
 
 	async connect(): Promise<void> {
@@ -31,12 +32,11 @@ export class JmapEventStream {
 
 		console.log("Event stream connection opened");
 
-		this.reader = response.body?.getReader();
-		const decoder = new TextDecoder();
-
-		if (!this.reader) {
+		if (!response.body) {
 			throw new Error("No readable stream available");
 		}
+
+		const decoder = new TextDecoder();
 
 		// Handle graceful shutdown
 		process.on("SIGINT", () => {
@@ -45,18 +45,14 @@ export class JmapEventStream {
 			process.exit(0);
 		});
 
-		// Read the stream
-		let done = false;
-		while (!done && !this.shouldStop) {
-			const result = await this.reader.read();
-			done = result.done;
-
-			if (done) {
+		// Read the stream using modern async iteration
+		for await (const chunk of response.body.values()) {
+			if (this.shouldStop) {
 				break;
 			}
 
-			const chunk = decoder.decode(result.value, { stream: true });
-			const lines = chunk.split("\n");
+			const chunkText = decoder.decode(chunk, { stream: true });
+			const lines = chunkText.split("\n");
 
 			for (const line of lines) {
 				if (line.startsWith("data: ")) {
@@ -66,8 +62,8 @@ export class JmapEventStream {
 					try {
 						const data = JSON.parse(eventData);
 						console.log("Parsed push data:", JSON.stringify(data, null, 2));
-						await this.onEvent(data);
-					} catch (_e) {
+						void this.onEvent(data);
+					} catch {
 						console.log("Raw push data:", eventData);
 					}
 				} else if (line.startsWith("event: ")) {
@@ -80,8 +76,5 @@ export class JmapEventStream {
 
 	disconnect(): void {
 		this.shouldStop = true;
-		if (this.reader) {
-			void this.reader.cancel();
-		}
 	}
 }

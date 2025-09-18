@@ -5,7 +5,7 @@ import { EmailStateTracker } from "./email-state-tracker";
 import { JmapClient } from "./jmap-client";
 import { JmapEventStream } from "./jmap-event-stream";
 import { createMailboxNames, findInboxAndChildren } from "./mailbox-utils";
-import type { AppConfig } from "./types";
+import type { AppConfig, JmapPushEvent } from "./types";
 
 async function setupApplication(): Promise<AppConfig> {
 	const token = process.env.FASTMAIL_TOKEN;
@@ -34,7 +34,7 @@ async function setupApplication(): Promise<AppConfig> {
 }
 
 async function handlePushEvent(
-	data: any,
+	data: JmapPushEvent,
 	client: JmapClient,
 	accountId: string,
 	stateTracker: EmailStateTracker,
