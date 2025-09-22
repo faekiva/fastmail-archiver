@@ -133,4 +133,88 @@ export class JmapClient {
 
 		return result.methodResponses[0][1].ids;
 	}
+
+	async createMailbox(accountId: string, name: string, parentId?: string): Promise<string> {
+		const mailboxData: { name: string; parentId?: string } = {
+			name,
+		};
+
+		if (parentId) {
+			mailboxData.parentId = parentId;
+		}
+
+		const response = await fetch(this.apiUrl, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				Authorization: `Bearer ${this.token}`,
+			},
+			body: JSON.stringify({
+				using: ["urn:ietf:params:jmap:core", "urn:ietf:params:jmap:mail"],
+				methodCalls: [
+					[
+						"Mailbox/set",
+						{
+							accountId,
+							create: {
+								"new-mailbox": mailboxData,
+							},
+						},
+						"c1",
+					],
+				],
+			}),
+		});
+
+		if (!response.ok) {
+			throw new Error(`Failed to create mailbox: ${response.status}`);
+		}
+
+		const result = await response.json();
+
+		if (result.methodResponses[0][1].created) {
+			return result.methodResponses[0][1].created["new-mailbox"].id;
+		}
+
+		throw new Error(`Failed to create mailbox: ${JSON.stringify(result.methodResponses[0][1])}`);
+	}
+
+	async moveEmail(accountId: string, emailId: string, targetMailboxId: string): Promise<void> {
+		const response = await fetch(this.apiUrl, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				Authorization: `Bearer ${this.token}`,
+			},
+			body: JSON.stringify({
+				using: ["urn:ietf:params:jmap:core", "urn:ietf:params:jmap:mail"],
+				methodCalls: [
+					[
+						"Email/set",
+						{
+							accountId,
+							update: {
+								[emailId]: {
+									mailboxIds: {
+										[targetMailboxId]: true,
+									},
+								},
+							},
+						},
+						"c1",
+					],
+				],
+			}),
+		});
+
+		if (!response.ok) {
+			throw new Error(`Failed to move email: ${response.status}`);
+		}
+
+		const result = await response.json();
+
+		if (!result.methodResponses[0][1].updated || !(emailId in result.methodResponses[0][1].updated)) {
+			throw new Error(`Failed to move email: ${JSON.stringify(result.methodResponses[0][1])}`);
+		}
+	}
 }

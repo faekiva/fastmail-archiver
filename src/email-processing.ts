@@ -1,8 +1,9 @@
 import { analyzeEmailMove, formatMoveMessage } from "./email-analysis";
 import type { EmailStateTracker } from "./email-state-tracker";
 import type { JmapClient } from "./jmap-client";
+import { MailboxOperations } from "./mailbox-operations";
 import { shouldTrackEmail } from "./mailbox-utils";
-import type { EmailChanges } from "./types";
+import type { EmailChanges, Mailbox } from "./types";
 
 export async function initializeEmailStates(
 	client: JmapClient,
@@ -39,6 +40,8 @@ export async function processEmailChanges(
 	stateTracker: EmailStateTracker,
 	mailboxNames: Map<string, string>,
 	trackedMailboxIds: string[],
+	_mailboxes: Mailbox[],
+	mailboxOperations?: MailboxOperations,
 ): Promise<void> {
 	if (changes.updated.length === 0) {
 		return;
@@ -62,6 +65,40 @@ export async function processEmailChanges(
 					subject: email.subject ?? "(no subject)",
 				};
 				console.log(formatMoveMessage(moveDescription));
+
+				if (mailboxOperations && moveAnalysis.type === "move") {
+					const sourceMailboxIds = moveAnalysis.sourceMailboxes
+						.map((name) => {
+							for (const [id, mailboxName] of mailboxNames.entries()) {
+								if (mailboxName === name) {
+									return id;
+								}
+							}
+
+							return "";
+						})
+						.filter((id) => id !== "");
+
+					const destMailboxIds = moveAnalysis.destMailboxes
+						.map((name) => {
+							for (const [id, mailboxName] of mailboxNames.entries()) {
+								if (mailboxName === name) {
+									return id;
+								}
+							}
+
+							return "";
+						})
+						.filter((id) => id !== "");
+
+					// eslint-disable-next-line no-await-in-loop
+					await mailboxOperations.handleEmailMove(
+						email.id,
+						email.subject ?? "(no subject)",
+						sourceMailboxIds,
+						destMailboxIds,
+					);
+				}
 			}
 
 			// Update stored state

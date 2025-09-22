@@ -4,8 +4,9 @@ import { initializeEmailStates, processEmailChanges } from "./email-processing";
 import { EmailStateTracker } from "./email-state-tracker";
 import { JmapClient } from "./jmap-client";
 import { JmapEventStream } from "./jmap-event-stream";
+import { MailboxOperations } from "./mailbox-operations";
 import { createMailboxNames, findInboxAndChildren } from "./mailbox-utils";
-import type { AppConfig, JmapPushEvent } from "./types";
+import type { AppConfig, JmapPushEvent, Mailbox } from "./types";
 
 async function setupApplication(): Promise<AppConfig> {
 	const token = process.env.FASTMAIL_TOKEN;
@@ -40,6 +41,8 @@ async function handlePushEvent(
 	stateTracker: EmailStateTracker,
 	mailboxNames: Map<string, string>,
 	trackedMailboxIds: string[],
+	mailboxes: Mailbox[],
+	mailboxOperations: MailboxOperations,
 ): Promise<void> {
 	if (!data.changed?.[accountId]?.Email) {
 		return;
@@ -47,7 +50,16 @@ async function handlePushEvent(
 
 	console.log("Email state changed, fetching changes...");
 	const changes = await client.getEmailChanges(accountId, data.changed[accountId].Email);
-	await processEmailChanges(changes, client, accountId, stateTracker, mailboxNames, trackedMailboxIds);
+	await processEmailChanges(
+		changes,
+		client,
+		accountId,
+		stateTracker,
+		mailboxNames,
+		trackedMailboxIds,
+		mailboxes,
+		mailboxOperations,
+	);
 }
 
 async function main(): Promise<void> {
@@ -61,11 +73,23 @@ async function main(): Promise<void> {
 	const mailboxNames = createMailboxNames(mailboxes);
 	const trackedMailboxIds = findInboxAndChildren(mailboxes);
 
+	const mailboxOperations = new MailboxOperations(client, config.accountId);
+	mailboxOperations.updateMailboxes(mailboxes);
+
 	console.log("Initializing email states for Inbox and child folders...");
 	await initializeEmailStates(client, config.accountId, trackedMailboxIds, stateTracker);
 
 	const eventStream = new JmapEventStream(config.eventSourceUrl, config.token, (data) =>
-		handlePushEvent(data, client, config.accountId, stateTracker, mailboxNames, trackedMailboxIds),
+		handlePushEvent(
+			data,
+			client,
+			config.accountId,
+			stateTracker,
+			mailboxNames,
+			trackedMailboxIds,
+			mailboxes,
+			mailboxOperations,
+		),
 	);
 
 	try {
