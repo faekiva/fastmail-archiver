@@ -1,7 +1,9 @@
 import type { Mailbox } from "./types";
 
+export type MinimalMailbox = Pick<Mailbox, "id" | "name" | "parentId" | "role">;
+
 export interface MailboxHierarchy {
-	mailbox: Mailbox;
+	mailbox: MinimalMailbox;
 	path: string;
 	children: MailboxHierarchy[];
 }
@@ -56,7 +58,7 @@ export function getMailboxPath(mailboxId: string, hierarchyMap: Map<string, Mail
 	return hierarchy ? hierarchy.path : null;
 }
 
-export function findMailboxByPath(path: string, hierarchyMap: Map<string, MailboxHierarchy>): Mailbox | null {
+export function findMailboxByPath(path: string, hierarchyMap: Map<string, MailboxHierarchy>): MinimalMailbox | null {
 	for (const hierarchy of hierarchyMap.values()) {
 		if (hierarchy.path === path) {
 			return hierarchy.mailbox;

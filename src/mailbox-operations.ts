@@ -2,6 +2,7 @@ import {
 	buildMailboxHierarchy,
 	findMailboxByPath,
 	type MailboxHierarchy,
+	MinimalMailbox,
 	shouldMirrorToArchive,
 } from "./archive-mirroring";
 import type { JmapClient } from "./jmap-client";
@@ -42,13 +43,11 @@ export class MailboxOperations {
 				const newMailboxId = await this.client.createMailbox(this.accountId, name, parentId);
 				createdMailboxes.set(path, newMailboxId);
 
-				const newMailbox: Mailbox = {
+				const newMailbox: MinimalMailbox = {
 					id: newMailboxId,
 					name,
-					parentId,
+					parentId: parentId ?? null,
 					role: null,
-					totalEmails: 0,
-					unreadEmails: 0,
 				};
 
 				const hierarchy: MailboxHierarchy = {

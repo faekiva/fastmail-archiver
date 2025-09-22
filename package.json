@@ -9,7 +9,10 @@
 		"test": "jest",
 		"build": "tsdown",
 		"start": "node --enable-source-maps ./dist/main.js",
-		"dev": "tsdown && node --enable-source-maps dist/main.js"
+		"dev": "tsdown && node --enable-source-maps dist/main.js",
+		"docker:build": "docker build -t fastmail-archiver .",
+		"docker:run": "docker run --rm -e FASTMAIL_TOKEN=\"$FASTMAIL_TOKEN\" fastmail-archiver",
+		"docker:dev": "npm run docker:build && npm run docker:run"
 	},
 	"repository": {
 		"type": "git",
