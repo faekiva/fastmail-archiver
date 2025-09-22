@@ -3,8 +3,33 @@ import type { Email, Mailbox } from "./types";
 
 export function createMailboxNames(mailboxes: Mailbox[]): Map<string, string> {
 	const mailboxNames = new Map<string, string>();
+
+	// Build hierarchy to get full paths
+	const hierarchyMap = new Map<string, { mailbox: Mailbox; children: string[]; path: string }>();
+
+	// First pass: create all entries
 	for (const mailbox of mailboxes) {
-		mailboxNames.set(mailbox.id, mailbox.name);
+		hierarchyMap.set(mailbox.id, { mailbox, children: [], path: "" });
+	}
+
+	// Second pass: build parent-child relationships and paths
+	for (const mailbox of mailboxes) {
+		const entry = hierarchyMap.get(mailbox.id);
+		if (!entry) continue;
+
+		if (mailbox.parentId) {
+			const parent = hierarchyMap.get(mailbox.parentId);
+			if (parent) {
+				parent.children.push(mailbox.id);
+				entry.path = parent.path ? `${parent.path}/${mailbox.name}` : mailbox.name;
+			} else {
+				entry.path = mailbox.name;
+			}
+		} else {
+			entry.path = mailbox.name;
+		}
+
+		mailboxNames.set(mailbox.id, entry.path);
 	}
 
 	return mailboxNames;

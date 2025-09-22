@@ -2,7 +2,6 @@ import {
 	buildMailboxHierarchy,
 	findMailboxByPath,
 	type MailboxHierarchy,
-	MinimalMailbox,
 	shouldMirrorToArchive,
 } from "./archive-mirroring";
 import type { JmapClient } from "./jmap-client";
@@ -43,33 +42,18 @@ export class MailboxOperations {
 				const newMailboxId = await this.client.createMailbox(this.accountId, name, parentId);
 				createdMailboxes.set(path, newMailboxId);
 
-				const newMailbox: MinimalMailbox = {
-					id: newMailboxId,
-					name,
-					parentId: parentId ?? null,
-					role: null,
-				};
-
-				const hierarchy: MailboxHierarchy = {
-					mailbox: newMailbox,
-					path,
-					children: [],
-				};
-
-				this.hierarchyMap.set(newMailboxId, hierarchy);
-
-				if (parentId) {
-					const parent = this.hierarchyMap.get(parentId);
-					if (parent) {
-						parent.children.push(hierarchy);
-					}
-				}
-
 				console.log(`📁 Created mailbox: ${path}`);
 			} catch (error) {
 				console.error(`Failed to create mailbox ${path}:`, error);
 				throw error;
 			}
+		}
+
+		// Refresh mailbox hierarchy with latest data from server
+		if (createdMailboxes.size > 0) {
+			console.log("🔄 Refreshing mailbox hierarchy after creating new mailboxes...");
+			const updatedMailboxes = await this.client.getMailboxes(this.accountId);
+			this.updateMailboxes(updatedMailboxes);
 		}
 
 		return createdMailboxes;
