@@ -15,7 +15,9 @@ export function createMailboxNames(mailboxes: Mailbox[]): Map<string, string> {
 	// Second pass: build parent-child relationships and paths
 	for (const mailbox of mailboxes) {
 		const entry = hierarchyMap.get(mailbox.id);
-		if (!entry) continue;
+		if (!entry) {
+			continue;
+		}
 
 		if (mailbox.parentId) {
 			const parent = hierarchyMap.get(mailbox.parentId);
