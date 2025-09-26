@@ -2,6 +2,7 @@ name: release
 
 # run on push to main
 on:
+  workflow_dispatch:
   push:
     branches:
       - "main"
