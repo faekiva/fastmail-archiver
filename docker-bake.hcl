@@ -30,4 +30,5 @@ group "default" {
 target "default" {
   dockerfile = "Dockerfile"
   platforms = ["linux/amd64"]
+  tags = [ "https://gitea.kiva.lgbt/faekiva/fastmail-archiver:latest" ]
 }
