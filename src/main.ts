@@ -93,8 +93,8 @@ async function main(): Promise<void> {
 	);
 
 	try {
-		await eventStream.connect();
 		console.log("Listening for push events... Press Ctrl+C to exit");
+		await eventStream.connect();
 	} catch (error) {
 		console.error("Event stream error:", error);
 	}

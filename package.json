@@ -1,7 +1,7 @@
 {
-	"name": "typescript-basic-skeleton",
-	"version": "2.0.0",
-	"description": "Bootstrap your new TypeScript project with the bare minimum dependencies",
+	"name": "fastmail-archiver",
+	"version": "0.0.1",
+	"description": "JMAP application for real-time email movement tracking and archiving using Fastmail",
 	"type": "module",
 	"scripts": {
 		"lint": "eslint .",
@@ -16,14 +16,14 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/CodelyTV/typescript-basic-skeleton.git"
+		"url": "git+https://github.com/faekiva/fastmail-archiver.git"
 	},
-	"author": "codelytv",
+	"author": "faekiva",
 	"license": "MIT",
 	"bugs": {
-		"url": "https://github.com/CodelyTV/typescript-basic-skeleton/issues"
+		"url": "https://github.com/faekiva/fastmail-archiver/issues"
 	},
-	"homepage": "https://github.com/CodelyTV/typescript-basic-skeleton#readme",
+	"homepage": "https://github.com/faekiva/fastmail-archiver#readme",
 	"devDependencies": {
 		"@types/jest": "^29.5.12",
 		"eslint": "^9.9.1",
